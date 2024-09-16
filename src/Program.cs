@@ -1,3 +1,4 @@
+using Amazon.SimpleEmail;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -17,6 +18,7 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonSimpleEmailService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
@@ -36,7 +38,7 @@ builder.Services.AddIdentityCore<ApplicationUser>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, AwsSesEmailSender>();
 
 var app = builder.Build();
 
