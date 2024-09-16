@@ -16,6 +16,8 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
     {
