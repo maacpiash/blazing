@@ -2,6 +2,10 @@ namespace Blazing.Data;
 
 public class CalendarEvent
 {
-    public Guid Id { get; set; }
-    public ApplicationUser User { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public ApplicationUser? User { get; set; }
+    public string Title { get; set; } = "";
+    public DateTime Date { get; set; } = DateTime.Now;
+    public string Location { get; set; } = "";
+    public string Description { get; set; } = "";
 }
