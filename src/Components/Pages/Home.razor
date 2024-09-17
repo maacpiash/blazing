@@ -1,7 +1,78 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Identity
+@using Blazing.Data
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Calendar events</h1>
 
-Welcome to your new app.
+
+<div class="container mt-5">
+    <h2 class="mb-4">Create a Calendar Event</h2>
+    <EditForm Enhance FormName="NewCalEvent" Model="@CalEvent" OnSubmit="@HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" role="alert" />
+        <div class="mb-3">
+            <label for="eventName" class="form-label">Event Name</label>
+            <InputText @bind-Value=CalEvent.Title class="form-control" id="eventName" placeholder="Enter event name" required />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="eventDateTime" class="form-label">Date</label>
+                <InputDate @bind-Value=CalEvent.Date Type="InputDateType.DateTimeLocal" class="form-control" id="eventDateTime" required />
+            </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="eventLocation" class="form-label">Location</label>
+                <InputText @bind-Value=CalEvent.Location type="text" class="form-control" id="eventLocation" placeholder="Enter location" @/>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                <label for="eventDescription" class="form-label">Description</label>
+                <InputTextArea @bind-Value=CalEvent.Description class="form-control" id="eventDescription" rows="4" placeholder="Enter event description" />
+            </div>
+
+            <!-- Buttons (centered on small screens) -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary me-md-2">Submit</button>
+                <button type="reset" class="btn btn-secondary">Reset</button>
+            </div>
+        </EditForm>
+</div>
+
+@code {
+    CalendarEvent CalEvent;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        if (authenticationState is not null)
+        {
+            var authState = await authenticationState;
+            var user = authState.User;
+            if (user?.Identity is not null && user.Identity.Name is not null && user.Identity.IsAuthenticated)
+            {
+                var userByEmailAddr = await UserManager.FindByEmailAsync(user.Identity.Name);
+                if (userByEmailAddr is not null)
+                    CalEvent = new() { User = userByEmailAddr };
+            }
+        }
+    }
+    void HandleSubmit()
+    {
+        Console.WriteLine(CalEvent.Date.ToString());
+        Console.WriteLine(CalEvent.Description);
+        Console.WriteLine(CalEvent.Id);
+        Console.WriteLine(CalEvent.Location);
+        Console.WriteLine(CalEvent.Title);
+        Console.WriteLine(CalEvent.User!.Id);
+    }
+}
