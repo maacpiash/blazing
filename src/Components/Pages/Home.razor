@@ -6,73 +6,36 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Calendar events</h1>
-
+<style>
+    .grid-item {
+        color: black; /* Text color */
+        height: 200px; /* Fixed height for the grid elements */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+        border: 2px solid #1b6ec2; /* Primary border */
+        border-radius: 15px; /* Rounded corners */
+    }
+    .grid-item:hover {
+        background-color: #1b6ec2; /* Darker background color on hover */
+        color: white;
+    }
+</style>
 
 <div class="container mt-5">
-    <h2 class="mb-4">Create a Calendar Event</h2>
-    <EditForm Enhance FormName="NewCalEvent" Model="@CalEvent" OnSubmit="@HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
-        <div class="mb-3">
-            <label for="eventName" class="form-label">Event Name</label>
-            <InputText @bind-Value=CalEvent.Title class="form-control" id="eventName" placeholder="Enter event name" required />
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+        <!-- First Grid Item -->
+        <div class="col">
+            <a href="calendar-events" class="grid-item text-decoration-none">
+                <h3>Calendar Events</h3>
+            </a>
         </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="eventDateTime" class="form-label">Date</label>
-                <InputDate @bind-Value=CalEvent.Date Type="InputDateType.DateTimeLocal" class="form-control" id="eventDateTime" required />
-            </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="eventLocation" class="form-label">Location</label>
-                <InputText @bind-Value=CalEvent.Location type="text" class="form-control" id="eventLocation" placeholder="Enter location" @/>
-            </div>
-
-            <!-- Description -->
-            <div class="mb-3">
-                <label for="eventDescription" class="form-label">Description</label>
-                <InputTextArea @bind-Value=CalEvent.Description class="form-control" id="eventDescription" rows="4" placeholder="Enter event description" />
-            </div>
-
-            <!-- Buttons (centered on small screens) -->
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button type="submit" class="btn btn-primary me-md-2">Submit</button>
-                <button type="reset" class="btn btn-secondary">Reset</button>
-            </div>
-        </EditForm>
+        <!-- Second Grid Item -->
+        <div class="col">
+            <a href="music" class="grid-item text-decoration-none">
+                <h3>Music</h3>
+            </a>
+        </div>
+    </div>
 </div>
-
-@code {
-    CalendarEvent CalEvent;
-
-    [CascadingParameter]
-    private Task<AuthenticationState>? authenticationState { get; set; }
-
-    protected async override Task OnInitializedAsync()
-    {
-
-        if (authenticationState is not null)
-        {
-            var authState = await authenticationState;
-            var user = authState.User;
-            if (user?.Identity is not null && user.Identity.Name is not null && user.Identity.IsAuthenticated)
-            {
-                var userByEmailAddr = await UserManager.FindByEmailAsync(user.Identity.Name);
-                if (userByEmailAddr is not null)
-                    CalEvent = new() { User = userByEmailAddr };
-            }
-        }
-    }
-    void HandleSubmit()
-    {
-        Console.WriteLine(CalEvent.Date.ToString());
-        Console.WriteLine(CalEvent.Description);
-        Console.WriteLine(CalEvent.Id);
-        Console.WriteLine(CalEvent.Location);
-        Console.WriteLine(CalEvent.Title);
-        Console.WriteLine(CalEvent.User!.Id);
-    }
-}
