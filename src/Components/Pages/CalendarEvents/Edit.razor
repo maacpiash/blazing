@@ -1,0 +1,142 @@
+﻿@page "/calendar-events/edit/{id:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Blazing.Components.Account
+@using Blazing.Data
+@inject IdentityUserAccessor UserAccessor
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize]
+@attribute [StreamRendering]
+@implements IAsyncDisposable
+
+<PageTitle>Edit calendar event</PageTitle>
+
+<div style="max-width: 640px;">
+    @if (CalendarEventFromDB is null || Model.Title is null || Model.Description is null || Model.Location is null)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h2>Edit Calendar Event: @CalendarEventFromDB.Title</h2>
+        <hr />
+        <form data-enhance method="post" @onsubmit="SubmitAsync" @formname="edit-calendar-event-form">
+            <AntiforgeryToken />
+            <div class="mb-3">
+                <label for="eventTitle" class="form-label">
+                    Title
+                </label>
+                <InputText id="eventTitle" class="form-control" @bind-Value="Model.Title" />
+            </div>
+            <div class="mb-3">
+                <label for="eventLocation" class="form-label">
+                    Location
+                </label>
+                <InputText id="eventLocation" class="form-control" @bind-Value="Model.Location" />
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="eventDate" class="form-label">
+                        Date
+                    </label>
+                    <InputDate id="eventDate" class="form-control" Type="InputDateType.Date" @bind-Value="Model.Date" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="eventTime" class="form-label">
+                        Time
+                    </label>
+                    <InputDate id="eventTime" class="form-control" Type="InputDateType.Time" @bind-Value="Model.Time" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="eventDescription" class="form-label">
+                    Description
+                </label>
+                <InputTextArea id="eventDescription" class="form-control" rows="4" @bind-Value="Model.Description" />
+            </div>
+            <div class="d-flex justify-content-between w-100">
+                <a role="button" class="btn btn-outline-info" href="calendar-events">Back to list</a>
+                <div class="ms-auto">
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                    <button class="btn btn-secondary" type="reset">Reset</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private CalendarEventDto Model { get; set; } = new();
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private ApplicationDbContext? dbContext;
+
+    private CalendarEvent? CalendarEventFromDB { get; set; }
+
+    private string? title;
+    private string? location;
+    private string? description;
+    private DateOnly date;
+    private TimeOnly time;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        dbContext = DbFactory.CreateDbContext();
+        CalendarEventFromDB = await dbContext.CalendarEvents
+            .Include(ce => ce.User)
+            .FirstOrDefaultAsync(ce => ce.Id == Id);
+        if (CalendarEventFromDB is null || CalendarEventFromDB.User.Id != user.Id)
+            NavigationManager.NavigateTo("notfound");
+        else
+        {
+            title = CalendarEventFromDB.Title;
+            location = CalendarEventFromDB.Location;
+            description = CalendarEventFromDB.Description;
+            date = DateOnly.FromDateTime(CalendarEventFromDB.Date);
+            time = TimeOnly.FromDateTime(CalendarEventFromDB.Date);
+
+            if (Model.Title == string.Empty) Model.Title = title;
+            if (Model.Description == string.Empty) Model.Description ??= description;
+            if (Model.Location == string.Empty) Model.Location ??= location;
+            Model.Date = date;
+            Model.Time = time;
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task SubmitAsync()
+    {
+        if (Model.Title != title || Model.Description != description || Model.Location != location || Model.Date != date || Model.Time != time)
+        {
+            CalendarEventFromDB!.UpdateFromDto(Model!);
+            dbContext!.Attach(CalendarEventFromDB).State = EntityState.Modified;
+
+            try
+            {
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!dbContext.CalendarEvents.Any(e => e.Id == CalendarEventFromDB.Id))
+                    NavigationManager.NavigateTo("notfound");
+            }
+        }
+        NavigationManager.NavigateTo("/calendar-events");
+    }
+
+    public async ValueTask DisposeAsync() => await dbContext!.DisposeAsync();
+}

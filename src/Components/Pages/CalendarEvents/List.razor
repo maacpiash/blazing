@@ -1,0 +1,82 @@
+﻿@page "/calendar-events"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Blazing.Components.Account
+@using Blazing.Data
+@inject IdentityUserAccessor UserAccessor
+@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+
+@attribute [StreamRendering]
+
+<PageTitle>Calendar Events</PageTitle>
+
+<div style="max-width: 640px;">
+    <div class="d-flex justify-content-between w-100">
+        <h1>Calendar Events</h1>
+        <a class="btn btn-primary h-50 mt-2" role="button" href="calendar-events/create">Create new</a>
+    </div>
+
+    @if (events is null)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (events.Any())
+    {
+        <ul class="list-group">
+            @foreach (var calendarEvent in events)
+            {
+                <li class="card" style="margin-bottom: 10px;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><strong>@calendarEvent.Title</strong></h5>
+                            <div class="action-buttons">
+                                <a
+                                    href="@($"calendar-events/edit/{calendarEvent.Id}")"
+                                    class="btn btn-sm btn-outline-primary me-2"
+                                >
+                                    Edit
+                                </a>
+                                <a
+                                    href="@($"calendar-events/delete/{calendarEvent.Id}")"
+                                    class="btn btn-sm btn-outline-danger"
+                                >
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                        <p>
+                            <strong>Date and Time:</strong>
+                            @(calendarEvent.Date.ToShortDateString() + " " + calendarEvent.Date.ToShortTimeString())
+                            <br />
+                            <strong>Location:</strong> @calendarEvent.Location<br />
+                        <strong>Description:</strong> @calendarEvent.Description</p>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="card text-center">
+            <span>You have no calendar event.</span>
+        </div>
+    }
+</div>
+
+@code {
+    public IEnumerable<CalendarEvent>? events { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        using var context = DbFactory.CreateDbContext();
+        events = await context.CalendarEvents.Where(ce => ce.User.Id == user.Id).ToListAsync();
+    }
+}

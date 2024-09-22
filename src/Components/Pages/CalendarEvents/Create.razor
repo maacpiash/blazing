@@ -1,0 +1,91 @@
+﻿@page "/calendar-events/create"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Blazing.Components.Account
+@using Blazing.Data
+@inject IdentityUserAccessor UserAccessor
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize]
+
+<div style="max-width: 640px;">
+    <h2 class="mb-4">Create a Calendar Event</h2>
+    <form data-enhance method="post" @onsubmit="SubmitAsync" @formname="new-calendar-event-form">
+        <AntiforgeryToken />
+        <div class="mb-3">
+            <label for="eventTitle" class="form-label">
+                Title
+            </label>
+            <InputText id="eventTitle" class="form-control" @bind-Value="Model!.Title" />
+        </div>
+        <div class="mb-3">
+            <label for="eventLocation" class="form-label">
+                Location
+            </label>
+            <InputText id="eventLocation" class="form-control" @bind-Value="Model!.Location" />
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="eventDate" class="form-label">
+                    Date
+                </label>
+                <InputDate id="eventDate" class="form-control" Type="InputDateType.Date" @bind-Value="Model!.Date" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="eventTime" class="form-label">
+                    Time
+                </label>
+                <InputDate id="eventTime" class="form-control" Type="InputDateType.Time" @bind-Value="Model!.Time" />
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="eventDescription" class="form-label">
+                Description
+            </label>
+            <InputTextArea id="eventDescription" class="form-control" rows="4" @bind-Value="Model!.Description" />
+        </div>
+        <div class="d-flex justify-content-between w-100">
+            <a role="button" class="btn btn-outline-info" href="calendar-events">Back to list</a>
+            <div class="ms-auto">
+                <button class="btn btn-primary" type="submit">Submit</button>
+                <button class="btn btn-secondary" type="reset">Reset</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "new-calendar-event-form")]
+    private CalendarEventDto? Model { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private ApplicationUser? CurrentUser { get; set; }
+
+    protected override async Task OnInitializedAsync() 
+    {
+        Model ??= new();
+        CurrentUser = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private async Task SubmitAsync()
+    {          
+        CalendarEvent newCalendarEvent = new()
+        {
+            User = CurrentUser!,
+            Title = Model!.Title,
+            Description = Model!.Description,
+            Location = Model!.Location,
+            Date = new DateTime(Model!.Date, Model!.Time),
+        };
+        using var dbContext = DbFactory.CreateDbContext();
+        dbContext.Entry(CurrentUser!).State = EntityState.Unchanged;
+        dbContext.CalendarEvents.Add(newCalendarEvent);
+        await dbContext.SaveChangesAsync();
+        NavigationManager.NavigateTo("/calendar-events");
+    }
+}
