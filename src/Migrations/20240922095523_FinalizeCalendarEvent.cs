@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Blazing.Migrations
 {
     /// <inheritdoc />
-    public partial class AddOnModelCreating : Migration
+    public partial class FinalizeCalendarEvent : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -23,6 +24,14 @@ namespace Blazing.Migrations
                 oldClrType: typeof(string),
                 oldType: "text",
                 oldNullable: true);
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "Date",
+                table: "CalendarEvents",
+                type: "timestamp without time zone",
+                nullable: false,
+                oldClrType: typeof(DateTime),
+                oldType: "timestamp with time zone");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_CalendarEvents_AspNetUsers_UserId",
@@ -47,6 +56,14 @@ namespace Blazing.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "text");
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "Date",
+                table: "CalendarEvents",
+                type: "timestamp with time zone",
+                nullable: false,
+                oldClrType: typeof(DateTime),
+                oldType: "timestamp without time zone");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_CalendarEvents_AspNetUsers_UserId",

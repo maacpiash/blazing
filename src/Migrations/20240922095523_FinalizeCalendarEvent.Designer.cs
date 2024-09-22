@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blazing.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240921134706_RenameCalendarEventTable")]
-    partial class RenameCalendarEventTable
+    [Migration("20240922095523_FinalizeCalendarEvent")]
+    partial class FinalizeCalendarEvent
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -96,7 +96,7 @@ namespace Blazing.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -111,6 +111,7 @@ namespace Blazing.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -256,7 +257,9 @@ namespace Blazing.Migrations
                 {
                     b.HasOne("Blazing.Data.ApplicationUser", "User")
                         .WithMany("CalendarEvents")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
