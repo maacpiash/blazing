@@ -9,25 +9,25 @@ public class CalendarEvent
     public string Location { get; set; } = "";
     public string Description { get; set; } = "";
 
-    internal void UpdateFromDto(CalendarEventDto dto)
+    public void UpdateFromDto(CalendarEventDto dto)
     {
-        Title = dto.Title;
-        Description = dto.Description;
-        Location = dto.Location;
+        if (!string.IsNullOrWhiteSpace(dto.Title)) Title = dto.Title;
+        if (!string.IsNullOrWhiteSpace(dto.Description)) Description = dto.Description;
+        if (!string.IsNullOrWhiteSpace(dto.Location)) Location = dto.Location;
         Date = new DateTime(dto.Date, dto.Time);
     }
 }
 
-internal class CalendarEventDto
+public class CalendarEventDto
 {
-    internal Guid? Id { get; set; }
-    internal string Title { get; set; } = "";
-    internal string Description { get; set; } = "";
-    internal string Location { get; set; } = "";
-    internal DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
-    internal TimeOnly Time { get; set; } = TimeOnly.FromDateTime(DateTime.Now);
+    public Guid? Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Location { get; set; } = "";
+    public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    public TimeOnly Time { get; set; } = TimeOnly.FromDateTime(DateTime.Now);
 
-    internal CalendarEvent ToCalendarEvent(ApplicationUser user)
+    public CalendarEvent ToCalendarEvent(ApplicationUser user)
     {
         var calendarEvent = new CalendarEvent()
         {
