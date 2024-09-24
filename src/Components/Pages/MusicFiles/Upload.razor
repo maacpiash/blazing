@@ -91,6 +91,7 @@ else
                     Id = Guid.NewGuid(),
                     User = userFromDb,
                     Title = FileInput.FileName,
+                    S3Key = FileInput.FileName,
                     S3Url = urlString,
                     Expires = DateTime.UtcNow.AddHours(12),
                 };

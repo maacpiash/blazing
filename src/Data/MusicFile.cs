@@ -6,6 +6,7 @@ public class MusicFile
 
     public required ApplicationUser User { get; set; }
     public string Title { get; set; } = "";
+    public string S3Key { get; set; } = "";
     public string S3Url { get; set; } = "";
 
     public DateTime Expires { get; set; }
