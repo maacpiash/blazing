@@ -1,10 +1,13 @@
 @page "/music"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Blazing.Components.Account
 @using Blazing.Data
 @inject IdentityUserAccessor UserAccessor
 @inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+
+@attribute [Authorize]
 
 @if (MusicFiles is not null && MusicFiles.Any())
 {

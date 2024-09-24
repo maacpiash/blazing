@@ -1,4 +1,5 @@
 ﻿@page "/calendar-events"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Blazing.Components.Account
@@ -6,6 +7,7 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
 
+@attribute [Authorize]
 @attribute [StreamRendering]
 
 <PageTitle>Calendar Events</PageTitle>

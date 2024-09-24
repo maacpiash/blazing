@@ -3,6 +3,7 @@
 @using System.IO
 @using Amazon.S3.Model
 @using Amazon.S3.Transfer
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Hosting
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -15,6 +16,8 @@
 @inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
 @inject ILogger<Upload> Logger
 @inject IWebHostEnvironment Environment
+
+@attribute [Authorize]
 
 <PageTitle>File Upload 1</PageTitle>
 
