@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blazing.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240915141007_AddCalendarEvents")]
-    partial class AddCalendarEvents
+    [Migration("20240924164015_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -95,6 +95,21 @@ namespace Blazing.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -103,7 +118,35 @@ namespace Blazing.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CalendarEvent");
+                    b.ToTable("CalendarEvents");
+                });
+
+            modelBuilder.Entity("Blazing.Data.MusicFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("S3Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MusicFiles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -249,6 +292,17 @@ namespace Blazing.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Blazing.Data.MusicFile", b =>
+                {
+                    b.HasOne("Blazing.Data.ApplicationUser", "User")
+                        .WithMany("MusicFiles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -303,6 +357,8 @@ namespace Blazing.Migrations
             modelBuilder.Entity("Blazing.Data.ApplicationUser", b =>
                 {
                     b.Navigation("CalendarEvents");
+
+                    b.Navigation("MusicFiles");
                 });
 #pragma warning restore 612, 618
         }
