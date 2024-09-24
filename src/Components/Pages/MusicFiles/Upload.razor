@@ -13,13 +13,13 @@
 @inject NavigationManager NavigationManager
 @inject IAmazonS3 s3Client
 @inject IdentityUserAccessor UserAccessor
-@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject ILogger<Upload> Logger
 @inject IWebHostEnvironment Environment
 
 @attribute [Authorize]
 
-<PageTitle>File Upload 1</PageTitle>
+<PageTitle>Music File Upload</PageTitle>
 
 <h1>Upload music</h1>
 
@@ -27,7 +27,7 @@
 {
     <form data-enhance enctype="multipart/form-data" method="post" @formname="upload-file" @onsubmit="UploadFileAsync">
         <AntiforgeryToken />
-        <input type="file" name="fileInput" class="form-control" required />
+        <input type="file" name="fileInput" class="form-control col-4" required />
         <button type="submit" class="btn btn-primary mt-2">Upload Selected File(s)</button>
     </form>
     @if (Successful)
@@ -41,12 +41,10 @@ else
 {
     <span>
         You need to confirm your email address for this feature. Please go to
-        <a href="/Account/ConfirmEmail">this page</a>
+        <a href="/Account/Manage/Email">this page</a>
         for further information.
     </span>
 }
-
-
 
 @code {
     [SupplyParameterFromForm(FormName = "upload-file")]
@@ -70,6 +68,7 @@ else
         if (FileInput is null) return;
         try
         {
+            // step 1: Uplaod file
             var bucketExists = await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(s3Client, bucketName);
             if (!bucketExists) return;
             var request = new PutObjectRequest()
@@ -80,6 +79,8 @@ else
             };
             request.Metadata.Add("Content-Type", FileInput.ContentType);
             var result = await s3Client.PutObjectAsync(request);
+
+            // step 2: save info to DB if upload is successful
             if (result.HttpStatusCode == System.Net.HttpStatusCode.OK)
             {
                 string urlString = GeneratePresignedURL(s3Client, bucketName, FileInput.FileName);
