@@ -1,0 +1,100 @@
+@page "/music/delete/{id:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Blazing.Data
+@using Amazon.S3
+@using Amazon.S3.Model
+@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject IAmazonS3 s3Client
+
+@attribute [Authorize]
+@attribute [StreamRendering]
+@implements IAsyncDisposable
+
+<PageTitle>Delete Music File</PageTitle>
+
+@if (musicFile is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h1>Delete Music File</h1>
+
+    <p>Are you sure you want to delete this music file?</p>
+    <div>
+        <hr />
+        @if (musicFile is null)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <h2>@musicFile.Title</h2>
+            <EditForm method="post" Model="musicFile" OnValidSubmit="DeleteMusicFile" FormName="delete" Enhance>
+                <button type="submit" class="btn btn-danger">Delete</button> |
+                <a href="/music">Back to List</a>
+            </EditForm>
+        }
+    </div>
+}
+
+@code {
+    private MusicFile? musicFile;
+    private ApplicationDbContext? dbContext;
+    private const string bucketName = "elasticbeanstalk-ap-southeast-2-124233493120";
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        dbContext = DbFactory.CreateDbContext();
+        musicFile = await dbContext.MusicFiles.FirstOrDefaultAsync(m => m.Id == Id);
+        if (musicFile is null) NavigationManager.NavigateTo("notfound");
+    }
+
+    private async Task DeleteMusicFile()
+    {
+        var success = await DeleteObjectNonVersionedBucketAsync(bucketName, musicFile.S3Key);
+        if (success)
+        {
+            dbContext!.MusicFiles.Remove(musicFile!);
+            await dbContext.SaveChangesAsync();
+            NavigationManager.NavigateTo("/music");
+        }
+    }
+
+    public async ValueTask DisposeAsync() => await dbContext!.DisposeAsync();
+
+    async Task<bool> DeleteObjectNonVersionedBucketAsync(string bucketName, string keyName)
+    {
+        try
+        {
+            var deleteObjectRequest = new DeleteObjectRequest
+            {
+                BucketName = bucketName,
+                Key = keyName
+            };
+
+            Console.WriteLine("Deleting an object");
+            await s3Client.DeleteObjectAsync(deleteObjectRequest);
+            return true;
+        }
+        catch (AmazonS3Exception e)
+        {
+            Console.WriteLine("Error encountered on server. Message:'{0}' when deleting an object", e.Message);
+            return false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Unknown encountered on server. Message:'{0}' when deleting an object", e.Message);
+            return false;
+        }
+    }
+}
