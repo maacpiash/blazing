@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using NanoidDotNet;
-using static NanoidDotNet.Nanoid.Alphabets;
 
 namespace Blazing.Data;
 
@@ -8,4 +6,5 @@ namespace Blazing.Data;
 public class ApplicationUser : IdentityUser
 {
     public ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
+    public ICollection<MusicFile> MusicFiles { get; set; } = new List<MusicFile>();
 }

@@ -12,7 +12,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ApplicationUser>()
             .HasMany(user => user.CalendarEvents)
             .WithOne(calEvent => calEvent.User);
+        builder.Entity<ApplicationUser>()
+            .HasMany(user => user.MusicFiles)
+            .WithOne(calEvent => calEvent.User);
     }
 
     public DbSet<CalendarEvent> CalendarEvents { get; set; } = default!;
+    public DbSet<MusicFile> MusicFiles { get; set; } = default!;
 }
