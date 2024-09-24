@@ -72,9 +72,21 @@ else
             if (result.HttpStatusCode == System.Net.HttpStatusCode.OK)
             {
                 string urlString = GeneratePresignedURL(s3Client, bucketName, FileInput.FileName);
-                Console.WriteLine(urlString);
+                using var dbContext = DbFactory.CreateDbContext();
+                var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+                var currentUser = await dbContext.Users.Where(u => u.Id == user.Id).FirstAsync();
+                var newMusic = new MusicFile()
+                {
+                    Id = Guid.NewGuid(),
+                    User = currentUser,
+                    Title = FileInput.FileName,
+                    S3Url = urlString,
+                    Expires = DateTime.UtcNow.AddHours(12),
+                };
+                dbContext.Entry(currentUser!).State = EntityState.Unchanged;
+                dbContext.MusicFiles.Add(newMusic);
             }
-            NavigationManager.NavigateTo("music");
+            NavigationManager.NavigateTo("/music");
         }
         catch (Exception x)
         {

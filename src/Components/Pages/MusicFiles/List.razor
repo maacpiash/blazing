@@ -1,0 +1,35 @@
+@page "/music"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Blazing.Components.Account
+@using Blazing.Data
+@inject IdentityUserAccessor UserAccessor
+@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+
+@if (MusicFiles is not null && MusicFiles.Any())
+{
+    <ul class="list-group">
+        @foreach (var musicFile in MusicFiles)
+            {
+                <li class="card" style="margin-bottom: 10px;">
+                    <a href="@musicFile.S3Url">@musicFile.Title</a>
+                </li>
+            }
+    </ul>
+}
+
+<a href="/music/upload" role="button" class="btn btn-outline-primary">Upload</a>
+
+@code {
+    public IEnumerable<MusicFile>? MusicFiles { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        using var context = DbFactory.CreateDbContext();
+        MusicFiles = await context.MusicFiles.Where(ce => ce.User.Id == user.Id).ToListAsync();
+    }
+}
