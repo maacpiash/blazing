@@ -9,19 +9,55 @@
 
 @attribute [Authorize]
 
-@if (MusicFiles is not null && MusicFiles.Any())
-{
-    <ul class="list-group">
-        @foreach (var musicFile in MusicFiles)
+<div style="max-width: 640px;">
+    <div class="d-flex justify-content-between w-100">
+        <h1>Music Files</h1>
+        <a class="btn btn-primary h-50 mt-2" role="button" href="/music/upload">Upload new</a>
+    </div>
+
+    @if (MusicFiles is null)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (MusicFiles.Any())
+    {
+        <ul class="list-group">
+            @foreach (var musicFile in MusicFiles)
             {
                 <li class="card" style="margin-bottom: 10px;">
-                    <a href="@musicFile.S3Url">@musicFile.Title</a>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><strong>@musicFile.Title</strong></h5>
+                        </div>
+                        <p>
+                            <audio controls src="@musicFile.S3Url"></audio>
+                        </p>
+                        <div class="d-flex justify-content-between w-100">
+                            <div class="ms-auto">
+                                <a href="@($"music/rename/{musicFile.Id}")" class="btn btn-sm btn-outline-primary me-2">
+                                    Rename
+                                </a>
+                                <a href="@($"music/delete/{musicFile.Id}")" class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </li>
             }
-    </ul>
-}
-
-<a href="/music/upload" role="button" class="btn btn-outline-primary">Upload</a>
+        </ul>
+    }
+    else
+    {
+        <div class="card text-center">
+            <span>You have no music files.</span>
+        </div>
+    }
+</div>
 
 @code {
     public IEnumerable<MusicFile>? MusicFiles { get; set; }
