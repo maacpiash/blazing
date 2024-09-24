@@ -57,11 +57,12 @@ else
 
     public bool UserEmailConfirmed { get; set; }
     public bool Successful { get; set; }
+    private ApplicationUser currentUser;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        UserEmailConfirmed = user is not null && user.EmailConfirmed;
+        currentUser = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        UserEmailConfirmed = currentUser is not null && currentUser.EmailConfirmed;
     }
 
     async Task UploadFileAsync()
@@ -83,17 +84,16 @@ else
             {
                 string urlString = GeneratePresignedURL(s3Client, bucketName, FileInput.FileName);
                 using var dbContext = DbFactory.CreateDbContext();
-                var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-                var currentUser = await dbContext.Users.Where(u => u.Id == user.Id).FirstAsync();
+                var userFromDb = await dbContext.Users.Where(u => u.Id == currentUser.Id).FirstAsync();
                 var newMusic = new MusicFile()
                 {
                     Id = Guid.NewGuid(),
-                    User = currentUser,
+                    User = userFromDb,
                     Title = FileInput.FileName,
                     S3Url = urlString,
                     Expires = DateTime.UtcNow.AddHours(12),
                 };
-                dbContext.Entry(currentUser!).State = EntityState.Unchanged;
+                dbContext.Entry(userFromDb!).State = EntityState.Unchanged;
                 dbContext.MusicFiles.Add(newMusic);
                 await dbContext.SaveChangesAsync();
                 Successful = true;
