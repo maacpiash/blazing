@@ -1,0 +1,106 @@
+@page "/music/upload"
+@using System 
+@using System.IO
+@using Amazon.S3.Model
+@using Amazon.S3.Transfer
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Amazon.S3
+@using Blazing.Components.Account
+@using Blazing.Data
+@inject NavigationManager NavigationManager
+@inject IAmazonS3 s3Client
+@inject IdentityUserAccessor UserAccessor
+@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+@inject ILogger<Upload> Logger
+@inject IWebHostEnvironment Environment
+
+<PageTitle>File Upload 1</PageTitle>
+
+<h1>Upload music</h1>
+
+@if (UserEmailConfirmed)
+{
+    <form data-enhance enctype="multipart/form-data" method="post" @formname="upload-file" @onsubmit="UploadFileAsync">
+        <AntiforgeryToken />
+        <input type="file" name="fileInput" class="form-control" required />
+        <button type="submit" class="btn btn-primary mt-2">Upload Selected File(s)</button>
+    </form>
+}
+else
+{
+    <span>
+        You need to confirm your email address for this feature. Please go to
+        <a href="/Account/ConfirmEmail">this page</a>
+        for further information.
+    </span>
+}
+
+
+
+@code {
+    [SupplyParameterFromForm(FormName = "upload-file")]
+    public IFormFile? FileInput { get; set; }
+
+    [CascadingParameter]
+    public HttpContext HttpContext { get; set; } = default!;
+
+    public bool UserEmailConfirmed { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        UserEmailConfirmed = user is not null && user.EmailConfirmed;
+    }
+
+    async Task UploadFileAsync()
+    {
+        if (FileInput is null) return;
+        try
+        {
+            var bucketExists = await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(s3Client, bucketName);
+            if (!bucketExists) return;
+            var request = new PutObjectRequest()
+            {
+                BucketName = bucketName,
+                Key = FileInput.FileName,
+                InputStream = FileInput.OpenReadStream()
+            };
+            request.Metadata.Add("Content-Type", FileInput.ContentType);
+            var result = await s3Client.PutObjectAsync(request);
+            if (result.HttpStatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string urlString = GeneratePresignedURL(s3Client, bucketName, FileInput.FileName);
+                Console.WriteLine(urlString);
+            }
+            NavigationManager.NavigateTo("music");
+        }
+        catch (Exception x)
+        {
+            Console.WriteLine(x.Message);
+        }
+    }
+    private const string bucketName = "elasticbeanstalk-ap-southeast-2-124233493120";
+
+    public static string GeneratePresignedURL(IAmazonS3 client, string bucketName, string objectKey)
+    {
+        string urlString = string.Empty;
+        try
+        {
+            var request = new GetPreSignedUrlRequest()
+            {
+                BucketName = bucketName,
+                Key = objectKey,
+                Expires = DateTime.UtcNow.AddHours(12),
+            };
+            urlString = client.GetPreSignedURL(request);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            Console.WriteLine($"Error:'{ex.Message}'");
+        }
+
+        return urlString;
+    }
+}
