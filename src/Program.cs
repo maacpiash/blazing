@@ -1,4 +1,5 @@
-﻿using Amazon.SimpleEmail;
+using Amazon.SimpleEmail;
+using Amazon.S3;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStat
 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonSimpleEmailService>();
+builder.Services.AddAWSService<IAmazonS3>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
