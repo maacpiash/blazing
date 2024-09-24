@@ -1,4 +1,4 @@
-using Amazon.SimpleEmail;
+﻿using Amazon.SimpleEmail;
 using Amazon.S3;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
@@ -42,6 +42,8 @@ builder.Services.AddIdentityCore<ApplicationUser>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, AwsSesEmailSender>();
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -51,6 +53,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 }
 else
