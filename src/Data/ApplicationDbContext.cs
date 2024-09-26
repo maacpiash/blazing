@@ -14,7 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithOne(calEvent => calEvent.User);
         builder.Entity<ApplicationUser>()
             .HasMany(user => user.MusicFiles)
-            .WithOne(calEvent => calEvent.User);
+            .WithOne(musicFile => musicFile.User);
     }
 
     public DbSet<CalendarEvent> CalendarEvents { get; set; } = default!;
