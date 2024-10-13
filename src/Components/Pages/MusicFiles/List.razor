@@ -68,7 +68,43 @@
     protected async override Task OnInitializedAsync()
     {
         var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        using var context = DbFactory.CreateDbContext();
-        MusicFiles = await context.MusicFiles.Where(ce => ce.User.Id == user.Id).ToListAsync();
+        using var dbContext = DbFactory.CreateDbContext();
+        MusicFiles = await dbContext.MusicFiles.Where(ce => ce.User.Id == user.Id).ToListAsync();
+        bool changed = false;
+        foreach (var file in MusicFiles)
+        {
+            if (file.Expires < DateTime.Now)
+            {
+                file.S3Key = GeneratePresignedURL(s3Client, bucketName, file.S3Key);
+                var userFromDb = await dbContext.Users.Where(u => u.Id == user.Id).FirstOrDefaultAsync();
+                dbContext.Entry(userFromDb!).State = EntityState.Unchanged;
+                dbContext.Attach(file).State = EntityState.Modified;
+                changed = true;
+            }
+        }
+        if (changed) await dbContext.SaveChangesAsync();
     }
+    
+    public static string GeneratePresignedURL(IAmazonS3 client, string bucketName, string objectKey)
+    {
+        string urlString = string.Empty;
+        try
+        {
+            var request = new GetPreSignedUrlRequest()
+            {
+                BucketName = bucketName,
+                Key = objectKey,
+                Expires = DateTime.UtcNow.AddHours(12),
+            };
+            urlString = client.GetPreSignedURL(request);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        return urlString;
+    }
+    
+    private const string bucketName = "elasticbeanstalk-ap-southeast-2-124233493120";
 }
