@@ -1,0 +1,89 @@
+@page "/music/rename/{id:guid}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Blazing.Data
+@using Blazing.Components.Account
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject IdentityUserAccessor UserAccessor
+@attribute [Authorize]
+@attribute [StreamRendering]
+@implements IAsyncDisposable
+
+<div style="max-width: 640px;">
+    @if (MusicFile is null)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h2>Rename Music File: @MusicFile.Title</h2>
+        <hr />
+        <form data-enhance method="post" @onsubmit="SubmitAsync" @formname="edit-calendar-event-form">
+            <AntiforgeryToken />
+            <div class="mb-3">
+                <label for="musicFileTitle" class="form-label">
+                    Name
+                </label>
+                <InputText id="musicFileTitle" class="form-control" @bind-Value="Title" />
+            </div>
+            <div class="d-flex justify-content-between w-100">
+                <a role="button" class="btn btn-outline-info" href="music">Back to list</a>
+                <div class="ms-auto">
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                    <button class="btn btn-secondary" type="reset">Reset</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private string Title { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private ApplicationDbContext? dbContext;
+    private ApplicationUser? user;
+
+    private MusicFile? MusicFile { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        dbContext = await DbFactory.CreateDbContextAsync();
+        MusicFile = await dbContext.MusicFiles.Include(mf => mf.User).FirstOrDefaultAsync(mf => mf.Id == Id);
+        if (MusicFile is null || MusicFile.User.Id != user.Id) NavigationManager.NavigateTo("notfound");
+    }
+
+    private async Task SubmitAsync()
+    {
+        dbContext!.Attach(MusicFile).State = EntityState.Modified;
+        MusicFile!.Title = Title;
+        var userFromDb = await dbContext!.Users.Where(u => u.Id == user!.Id).FirstOrDefaultAsync();
+
+        try
+        {
+            await dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!dbContext.CalendarEvents.Any(e => e.Id == MusicFile.Id))
+                NavigationManager.NavigateTo("notfound");
+        }
+        
+        NavigationManager.NavigateTo("music");
+    }
+    
+    public async ValueTask DisposeAsync() => await dbContext!.DisposeAsync();
+}
