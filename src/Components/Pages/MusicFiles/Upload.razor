@@ -85,11 +85,11 @@ else
             {
                 string urlString = GeneratePresignedURL(s3Client, bucketName, FileInput.FileName);
                 using var dbContext = DbFactory.CreateDbContext();
-                var userFromDb = await dbContext.Users.Where(u => u.Id == currentUser.Id).FirstAsync();
+                var userFromDb = await dbContext.Users.Where(u => u.Id == currentUser.Id).FirstOrDefaultAsync();
                 var newMusic = new MusicFile()
                 {
                     Id = Guid.NewGuid(),
-                    User = userFromDb,
+                    User = userFromDb!,
                     Title = FileInput.FileName,
                     S3Key = FileInput.FileName,
                     S3Url = urlString,

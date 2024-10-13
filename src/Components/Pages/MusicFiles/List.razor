@@ -1,11 +1,13 @@
 @page "/music"
+@using Amazon.S3
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Identity
+@using Amazon.S3.Model
 @using Microsoft.EntityFrameworkCore
 @using Blazing.Components.Account
 @using Blazing.Data
 @inject IdentityUserAccessor UserAccessor
-@inject IDbContextFactory<Blazing.Data.ApplicationDbContext> DbFactory
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IAmazonS3 s3Client
 
 @attribute [Authorize]
 
